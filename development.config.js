@@ -3,7 +3,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const webpack = require('webpack');
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const devMode = process.env.NODE_ENV !== 'production';
 
 module.exports = {
     entry: {
@@ -12,31 +13,34 @@ module.exports = {
     },
     mode: 'development',
     output: {
-        filename: '[name].[hash].js',
-        path: path.resolve(__dirname, 'dist')
+        filename: 'scripts/[name].[hash].js',
+        path: path.resolve(__dirname, 'dist/'),
+        publicPath: '/static/'
     },
     module: {
         rules: [
             {
                 test: /\.css$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: "style-loader",
-                    use: "css-loader"
-                })
+                use: [
+                    devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+                    'css-loader',
+                ],
             },
             {
                 test: /\.(png|svg|jpg|gif|woff|woff2|eot|ttf|otf)$/,
-                use: ['file-loader']
+                use: [{
+                    loader: 'file-loader',
+                    options: {
+                        name: 'images/[name].[ext]'
+                    }
+                }]
             }
         ]
     },
     plugins: [
-        // new ExtractTextPlugin("styles.css"),
-        new ExtractTextPlugin({
-            filename:  (getPath) => {
-              return getPath('css/[name].css').replace('css/js', 'css');
-            },
-            allChunks: true
+        new MiniCssExtractPlugin({
+            filename: devMode ? 'styles/[name].css' : 'styles/[name].[hash].css',
+            chunkFilename: devMode ? 'styles/[id].css' : 'styles/[id].[hash].css',
           }),
         new UglifyJSPlugin(),
         new webpack.NamedModulesPlugin(),
@@ -59,4 +63,4 @@ module.exports = {
             chunks: ['about']
         })
     ]
-}
+} 
